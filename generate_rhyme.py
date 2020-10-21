@@ -33,5 +33,6 @@ def pos_check(soup):
     if pos == 'verb':
         return (pos, raw_pos_text[5:])
 
+
 if __name__ == "__main__":
     main()
