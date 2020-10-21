@@ -12,3 +12,23 @@
 ###
 ###
 
+from bs4 import BeautifulSoup
+import requests
+from common_words.common_words import compile_histograms
+
+def main():
+    site = 'https://www.dictionary.com/browse/'
+    word = 'bow'
+    query_web_dict(site, word)
+
+def query_web_dict(site, word):
+    page = requests.get(site + word)
+    soup = BeautifulSoup(page.content, 'html.parser')
+    verb_check(soup)
+
+def verb_check(soup):
+    part_of_speech = soup.find(class_="luna-pos").text
+    print(part_of_speech)
+
+if __name__ == "__main__":
+    main()
