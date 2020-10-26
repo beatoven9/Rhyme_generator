@@ -5,6 +5,8 @@
 
 ###   this is to get the diff inflections of an adjective:       class_='luna-inflected-form bold'
 
+###     errors: house, subject, houses, convict     essentially anything with variable pronunciation as a result of part of speech (IPA parsing error)
+
 
 from bs4 import BeautifulSoup
 import requests
@@ -39,7 +41,7 @@ class Word:
             print(key + ':', self.word_info[key])
 
 def query_word(word):
-    print("Querying word:", word)
+#    print("Querying word:", word)
     site = 'https://www.dictionary.com/browse/'
 
     try:
@@ -55,6 +57,7 @@ def get_POS(soup, word):
     try:
         return soup.find(class_='luna-pos').text.replace(",", "")
     except:
+        print("could not find part of speech for", word)
         return None
 
 def parse_IPA(soup, word):
@@ -64,7 +67,7 @@ def parse_IPA(soup, word):
         print("Skipping:",  word,  " class 'pron-ipa-content css-cqidvf evh0tcl2' does not exist")
         return
     except:
-        print("unknown error")
+        print("unknown error:", word)
         sys.exc_info()[0]
     return clean_up(IPA_raw_text)
 
@@ -96,17 +99,18 @@ def clean_up(IPA_text):
     return IPA_text.replace("/", "").strip()
 
 def strict_rhyme(IPA, word):
-    IPA_vowels = set(['i', 'y', 'ɨ', 'ʉ', 'ɯ', 'u', 'ɪ', 'ʏ', 'ʊ', 'e', 'ø', 'ɘ', 'ɵ', 'ɤ', 'o', 'ə', 'ɛ', 'œ', 'ɜ', 'ɞ', 'ʌ', 'ɔ', 'æ', 'ɐ', 'a', 'ɶ', 'ɑ', 'ɒ'])
-
+###    IPA_vowels = set(['i', 'y', 'ɨ', 'ʉ', 'ɯ', 'u', 'ɪ', 'ʏ', 'ʊ', 'e', 'ø', 'ɘ', 'ɵ', 'ɤ', 'o', 'ə', 'ɛ', 'œ', 'ɜ', 'ɞ', 'ʌ', 'ɔ', 'æ', 'ɐ', 'a', 'ɶ', 'ɑ', 'ɒ'])
+    # omit 'y'
+    IPA_vowels = set(['i', 'ɨ', 'ʉ', 'ɯ', 'u', 'ɪ', 'ʏ', 'ʊ', 'e', 'ø', 'ɘ', 'ɵ', 'ɤ', 'o', 'ə', 'ɛ', 'œ', 'ɜ', 'ɞ', 'ʌ', 'ɔ', 'æ', 'ɐ', 'a', 'ɶ', 'ɑ', 'ɒ'])
     try:
         IPA_list = IPA.split()
         rhyme = IPA_list[-1]
 
-        ### fix one syllable words ending in a vowel. allow them to represent their own ending in full
+        ### one syllable words ending in a vowel represent their own ending in full
         if len(IPA_list) == 1 and rhyme[-1] in IPA_vowels:
             return rhyme
         ### if the last sound is a vowel, use the last two syllables
-        elif rhyme[-1] in IPA_vowels:
+        elif rhyme[-1] in IPA_vowels or (rhyme[-1] == 'r' and len(IPA_list) > 1):
             rhyme = IPA_list[-2] + IPA_list[-1]
 
         ### if the last sound is a consonant, use only the last syllable
@@ -121,10 +125,10 @@ def strict_rhyme(IPA, word):
         print("Skipping:", word, "-- no string fed to strict_rhyme()")
         return
     except AttributeError:
-        print("attribute error. None type fed to strict_rhyme()")    
+        print("attribute error. None type fed to strict_rhyme()", word)    
         return
     except:
-        print('unkown error occurred strict rhyme')
+        print('unkown error occurred strict rhyme:', word)
         print(sys.exc_info()[0])
         return
 
@@ -149,9 +153,9 @@ def loose_rhyme(ending, word):
     except TypeError:
         print('Skipping:', word, "-- no string fed to loose_rhyme()")
     except AttributeError:
-        print("attribute error. None type fed to loose_rhyme()")
+        print("attribute error. None type fed to loose_rhyme()", word)
     except:
-        print('unkown error occurred loose rhyme')
+        print('unkown error occurred loose rhyme:', word)
         sys.exc_info()[0]
         return
 
